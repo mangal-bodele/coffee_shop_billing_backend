@@ -48,16 +48,6 @@ class Transaction(models.Model):
         db_table = 'transaction'
 
 
-class Invoice(models.Model):
-    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='invoice')
-    invoice_url = models.URLField(max_length=200)
-    invoice_number = models.CharField(max_length=50, unique=True)
-    generated_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"Invoice for Order {self.order.id}"
-
-    class Meta:
-        db_table = 'invoice'
 
 

@@ -1,20 +1,13 @@
 from rest_framework.generics import GenericAPIView
-from rest_framework.response import Response
-from rest_framework import status
 from django.conf import settings
-from django.http import HttpResponse
-import pdfkit  # For generating PDF invoices (ensure wkhtmltopdf is installed)
 import razorpay
 import hashlib
 import hmac
-from .models import Order, Transaction, Invoice
+
 from rest_framework.views import APIView
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
-from reportlab.pdfgen import canvas
-from .models import Transaction, Order
+from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.generics import GenericAPIView
+from .models import Order, Transaction
 
 
 # Razorpay client initialization
@@ -117,42 +110,37 @@ class VerifyPaymentAPIView(GenericAPIView):
 
 
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Order, Transaction
 
-class GenerateInvoiceView(GenericAPIView):
-    """
-    View to generate an invoice for a specific transaction and order.
-    Inherits from DRF's GenericAPIView.
-    """
-    def get(self, request, transaction_id, *args, **kwargs):
-        # Fetch the transaction and related order using transaction_id
-        transaction = get_object_or_404(Transaction, id=transaction_id)
-        order = get_object_or_404(Order, id=transaction.order.id)
+class InvoiceView(APIView):
+    def get(self, request, transaction_id):
+        """
+        Generate invoice based on Razorpay Transaction ID.
+        """
+        try:
+            # Fetch the transaction using the transaction_id
+            transaction = Transaction.objects.get(id=transaction_id)
+            order = transaction.order  # Fetch the associated order
 
-        # Create a response for PDF
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="invoice_{transaction_id}.pdf"'
+            # Prepare invoice data
+            data = {
+                "invoice_type": "Transaction",
+                "razorpay_order_id": transaction.razorpay_order_id,
+                "razorpay_payment_id": transaction.razorpay_payment_id,
+                "status": transaction.status,
+                "created_at": transaction.created_at,
+                "order_details": {
+                    "order_id": str(order.id),
+                    "customer_name": order.customer_name,
+                    "total_amount": str(order.total_amount),
+                    "status": order.status,
+                    "created_at": order.created_at,
+                },
+            }
+            return Response(data, status=status.HTTP_200_OK)
 
-        # Generate PDF
-        p = canvas.Canvas(response)
-
-        # Add title
-        p.drawString(100, 800, "Invoice")
-
-        # Add transaction and order details
-        p.drawString(100, 780, f"Transaction ID: {transaction.razorpay_order_id}")
-        p.drawString(100, 760, f"Date: {transaction.created_at.strftime('%Y-%m-%d %H:%M:%S')}")
-        p.drawString(100, 740, f"Customer: {order.customer_name}")
-        p.drawString(100, 720, f"Total Amount: ₹{order.total_amount}")
-
-        # Order Details (assuming order has related order items)
-        y_position = 700
-        for item in order.orderitem_set.all():
-            p.drawString(100, y_position, f"{item.product.name} - ₹{item.price} x {item.quantity}")
-            y_position -= 20
-
-        p.drawString(100, y_position - 20, f"Total: ₹{order.total_amount}")
-        p.showPage()
-        p.save()
-
-        return response
-
+        except Transaction.DoesNotExist:
+            return Response({"error": "Transaction not found"}, status=status.HTTP_404_NOT_FOUND)

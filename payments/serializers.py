@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Order, Transaction, Invoice
+from .models import Order, Transaction
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -16,9 +16,3 @@ class TransactionSerializer(serializers.ModelSerializer):
         fields = ['id', 'order', 'razorpay_order_id', 'razorpay_payment_id', 'razorpay_signature', 'status', 'created_at']
 
 
-class InvoiceSerializer(serializers.ModelSerializer):
-    order = OrderSerializer()  # Nested serializer for order information
-
-    class Meta:
-        model = Invoice
-        fields = ['id', 'order', 'invoice_url', 'generated_at']
