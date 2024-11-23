@@ -46,7 +46,10 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = ["http://localhost:3000"]
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",  # Frontend local URL
+    "https://coffeeshopbillingfrontend-production.up.railway.app",  # Deployed frontend URL
+]
 
 ROOT_URLCONF = 'coffee_shop_proj.urls'
 
