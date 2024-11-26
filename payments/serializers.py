@@ -1,18 +1,20 @@
 from rest_framework import serializers
-from .models import Order, Transaction
-
-
-class OrderSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Order
-        fields = ['id', 'customer_name', 'total_amount', 'status', 'created_at']
-
+from .models import Transaction
 
 class TransactionSerializer(serializers.ModelSerializer):
-    order = OrderSerializer()  # Nested serializer for order information
-
     class Meta:
         model = Transaction
-        fields = ['id', 'order', 'razorpay_order_id', 'razorpay_payment_id', 'razorpay_signature', 'status', 'created_at']
-
-
+        fields = [
+            'transaction_id',
+            'payment_id',
+            'order_id',
+            'amount',
+            'items',
+            'status',
+            'payment_method',
+            'created_at',
+            'customer_name',
+            'customer_email',
+            'customer_mobile_number',
+        ]
+        read_only_fields = ['transaction_id', 'created_at']

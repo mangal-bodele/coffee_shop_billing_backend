@@ -1,13 +1,11 @@
-from rest_framework.generics import GenericAPIView
-from django.conf import settings
-import razorpay
-import hashlib
+import datetime
 import hmac
-
-from rest_framework.views import APIView
+import hashlib
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Order, Transaction
+from rest_framework.generics import GenericAPIView
+import razorpay
+from django.conf import settings
 
 
 # Razorpay client initialization
@@ -109,38 +107,27 @@ class VerifyPaymentAPIView(GenericAPIView):
             )
 
 
+class GenerateInvoiceAPIView(GenericAPIView):
+    """
+    API endpoint to generate an invoice for a successful payment.
+    """
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from .models import Order, Transaction
+    def get(self, request, *args, **kwargs):
+        transaction_id = request.query_params.get('transaction_id')
+        if not transaction_id:
+            return Response({"error": "Transaction ID missing"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Fetch payment details from the database using transaction_id
+        # Example: payment = Payment.objects.get(transaction_id=transaction_id)
 
-class InvoiceView(APIView):
-    def get(self, request, transaction_id):
-        """
-        Generate invoice based on Razorpay Transaction ID.
-        """
-        try:
-            # Fetch the transaction using the transaction_id
-            transaction = Transaction.objects.get(id=transaction_id)
-            order = transaction.order  # Fetch the associated order
+        # Generate invoice logic
+        invoice_data = {
+            'transaction_id': transaction_id,
+            'amount': 1000,  # Example amount
+            'date': datetime.now().strftime('%Y-%m-%d'),
+            'items': [{'name': 'Item 1', 'price': 500}, {'name': 'Item 2', 'price': 500}]
+        }
+        
+        # Return invoice data or a file (e.g., PDF)
+        return Response({"invoice": invoice_data}, status=status.HTTP_200_OK)
 
-            # Prepare invoice data
-            data = {
-                "invoice_type": "Transaction",
-                "razorpay_order_id": transaction.razorpay_order_id,
-                "razorpay_payment_id": transaction.razorpay_payment_id,
-                "status": transaction.status,
-                "created_at": transaction.created_at,
-                "order_details": {
-                    "order_id": str(order.id),
-                    "customer_name": order.customer_name,
-                    "total_amount": str(order.total_amount),
-                    "status": order.status,
-                    "created_at": order.created_at,
-                },
-            }
-            return Response(data, status=status.HTTP_200_OK)
-
-        except Transaction.DoesNotExist:
-            return Response({"error": "Transaction not found"}, status=status.HTTP_404_NOT_FOUND)

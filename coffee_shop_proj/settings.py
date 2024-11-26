@@ -35,7 +35,7 @@ AUTH_USER_MODEL = 'auth.User'  # Or use a custom user model if you prefer
 # Middleware
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-'whitenoise.middleware.WhiteNoiseMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -56,7 +56,7 @@ ROOT_URLCONF = 'coffee_shop_proj.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'payments/templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -73,13 +73,18 @@ WSGI_APPLICATION = 'coffee_shop_proj.wsgi.application'
 
 # Database configuration
 
-import dj_database_url
-
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.getenv("DATABASE_URL"),
-        conn_max_age=600,  # Optional: Adjust connection persistence
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT'),
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+        },
+    }
 }
 
 
@@ -107,21 +112,31 @@ USE_I18N = True
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
-STATIC_URL = '/static/'  # The URL path for accessing static files
-STATIC_ROOT = BASE_DIR / 'staticfiles'  # The folder where Django collects static files during deployment
+import os
 
+STATIC_URL = '/static/'  # URL to access static files
+
+# Paths to static files during development
 STATICFILES_DIRS = [
-    BASE_DIR / 'static',  # Tells Django where to look for static files
+    os.path.join(BASE_DIR, 'payments/static'),  # Path to app-level static files
 ]
 
+# Path where static files will be collected when running `collectstatic` (for production)
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+
+
 # Media files
-MEDIA_URL = '/media/'  # The URL path for accessing media files
-MEDIA_ROOT = BASE_DIR / 'media'  # The folder where uploaded files are stored
+import os
+
+# MEDIA URL and ROOT for uploaded files
+MEDIA_URL = '/media/'  # The URL to access media files in the browser
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # The local file system path where media files are stored
+
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Razorpay settings (replace with your Razorpay test credentials)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_USE_TLS = True
@@ -129,6 +144,6 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
-# Razorpay API keys
+# Razorpay settings
 RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID')
 RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_KEY_SECRET')
